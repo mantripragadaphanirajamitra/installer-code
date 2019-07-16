@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Include>
+  <!-- +++++++++++++++++++++++++++ VIRTUAL_DIR_VAL property initialize +++++++++++++++++++++++++++ -->
+  <!--<Property Id="VIRTUAL_DIR_VAL" Value="nexzip" />-->
+
+  <!-- +++++++++++++++++++++++++++ web app name properties initialize +++++++++++++++++++++++++++ -->
+  <Property Id="WEB_APP_NAME" Value="nexzip" />
+
+  <!-- +++++++++++++++++++++++++++ app pool identity properties initialize +++++++++++++++++++++++++++ -->
+  <Property Id="WEB_APP_POOL_IDENTITY_DOMAIN" Value="POOL_DOMAIN" />
+  <Property Id="WEB_APP_POOL_IDENTITY_NAME"  />
+  <Property Id="WEB_APP_POOL_IDENTITY_PWD" Hidden="yes" />
+  <Property Id="PORTNOHTTP" Value="8080"/>
+  <Property Id="PORTNOHTTPS" Value="602"/>
+  <Property Id="URL">http://FQDN:5040/</Property>
+
+
+
+</Include>

@@ -1,0 +1,604 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:bal="http://schemas.microsoft.com/wix/BalExtension"
+     xmlns:iis="http://schemas.microsoft.com/wix/IIsExtension"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
+     xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension"
+     xmlns:sql='http://schemas.microsoft.com/wix/SqlExtension'>
+	
+  <?define ProductName = "Nexzipasswordresetinstaller"?>
+  <?define ProductVersion="1.0.0.0" ?>
+  <?define UpgradeCode="{28217308-EAD7-4F32-AD8A-F1EB58E25FE6}"?>
+  <?define Manufacturer="NEXZIP BUSINESS SOLUTIONS PRIVATE LIMITED"?>
+  <?define ProductCode="{65040E94-76D6-4B91-9B5D-1D5F108D8A8A}"?>
+  <!--<? It's mandatory to change the package code for every updates. ?>-->
+  <!--<?define PackageCode="{05DD8789-300A-4522-A0D0-6DBFD69BBFF4}"?>-->
+  <?define PackageCode="*"?>
+  <?define RTMProductVersion="0.0.0.0" ?>
+
+  <Product Id="*" Name="$(var.ProductName)" Language="1033" Version="$(var.ProductVersion)" Manufacturer="NEXZIP BUSINESS SOLUTIONS PRIVATE LIMITED" UpgradeCode="$(var.UpgradeCode)">
+
+    <Package Id="$(var.PackageCode)" InstallerVersion="200" Compressed="yes" />
+
+    <Media Id="1" Cabinet="nexzip.cab" EmbedCab="yes" />       
+    <!--upgrade-->
+    <Upgrade Id="$(var.UpgradeCode)">
+      <UpgradeVersion OnlyDetect="yes" Minimum="$(var.ProductVersion)" Property="NEWERVERSIONDETECTED" IncludeMinimum="no" />
+
+      <UpgradeVersion Minimum="$(var.RTMProductVersion)" IncludeMinimum="yes" Maximum="$(var.ProductVersion)" IncludeMaximum="no" Property="UPGRADEFOUND" />
+
+      <!-- Detect for changes in 4th field only -->
+      <UpgradeVersion Property="ANOTHERBUILDINSTALLED" Maximum="$(var.ProductVersion)" Minimum="$(var.ProductVersion)" IncludeMinimum="yes" IncludeMaximum="yes" OnlyDetect="yes" />
+    </Upgrade>
+    <Property Id="VIRTUAL_DIR_VAL" Value="nexzip" />
+    <Property Id="DATELI" Value="12-06-2019" />
+    <Binary Id="CustomAction1" SourceFile="..\CustomAction1\bin\$(var.Configuration)\CustomAction1.CA.dll" />
+    <CustomAction Id="ValidateForSpaceFromUserAgent" BinaryKey="CustomAction1" DllEntry="ValidateForSpaceFromUserAgent" Execute="immediate" Return="check" />
+    <CustomAction Id="ValidateForSpaceFromSXPUrl" BinaryKey="CustomAction1" DllEntry="ValidateForSpaceFromSXPUrl" Execute="immediate" Return="check" />
+    <CustomAction Id="GetFullComputerName" BinaryKey="CustomAction1" DllEntry="GetCompAndDomName" Execute="immediate" Return="check" />
+    <CustomAction Id="GetCompAndDomNameWithoutPort" BinaryKey="CustomAction1" DllEntry="GetCompAndDomNameWithoutPort" Execute="immediate" Return="check" />
+    <CustomAction Id="ValidateAgentAccount" BinaryKey="CustomAction1" DllEntry="ValidateAgentAccount" Execute="immediate" Return="check" />
+    <CustomAction Id="ConstructSxpUrl" BinaryKey="CustomAction1" DllEntry="ConstructSxpUrl" Execute="immediate" Return="check" />
+    <CustomAction Id="GetContextname" BinaryKey="CustomAction1" DllEntry="GetContextname" Execute="immediate" Return="check" />
+    <!--<CustomAction Id="GetCurrentDate" BinaryKey="CustomAction1" DllEntry="GetCurrentDate" Execute="immediate" Return="check" />-->
+    <CustomAction Id="OnCheckHttps" BinaryKey="CustomAction1" DllEntry="OnCheckHttps" Execute="immediate" Return="check" />
+    <CustomAction Id="CA_BlockOlderVersionInstall" Error="Newer version of the product is already installed."/>
+    <CustomAction Id="CA_BlockAnotherBuildInstall" Error="The same version of the product is already installed."/>
+
+
+    <Feature Id="ProductFeature" Title="Nexzip_Password_Reset_Installer" Level="1">
+      <!--<ComponentGroupRef Id="ProductComponents" />-->
+      <ComponentRef Id="WebConfigCmp" />
+      <ComponentRef Id="BinComponent" />
+      <ComponentRef Id="RoslynComponent" />
+      <ComponentRef Id="ContentComponent" />
+      <ComponentRef Id="FontsComponent" />
+      <ComponentRef Id="ImagesComponent" />
+      <ComponentRef Id="ScriptsComponent" />
+      <ComponentRef Id="ViewsComponent" />
+      <ComponentRef Id="AccountComponent" />
+      <ComponentRef Id="HomeComponent" />
+      <ComponentRef Id="SharesComponent" />
+        <ComponentRef Id="App_DataComponent" />
+       <ComponentRef Id="AssetsComponent" />
+       <ComponentRef Id="CssComponent" />
+      <ComponentRef Id="DemoComponent" />
+         <ComponentRef Id="Font1Component" />
+     
+        <ComponentRef Id="ImgComponent" />
+       <ComponentRef Id="JsComponent" />
+       <ComponentRef Id="CoreComponent" />
+
+      <ComponentRef Id="Settings" />
+      
+      <ComponentRef Id="PluginsComponent" />
+      <ComponentGroupRef Id="MyWebIssConfiguration"/>
+      
+      <!--<ComponentGroupRef Id="MyWebIssConfiguration" />-->
+      <!--<ComponentRef Id="MyWebVirtualDirCmp" />
+      <ComponentRef Id="MyWebAppPoolCmp" />-->
+      
+
+    </Feature>
+    <UI>
+    
+      <Dialog Id="IisSetupDlg" Width="370" Height="270" Title="[ProductName] Setup" NoMinimize="yes" >
+        <!-- Virtual Dir prompt -->
+        <Control Id="VirtualDirLabel" Type="Text" X="45" Y="73" Width="100" Height="15" TabSkip="no" Text="Web app name" />
+        <Control Id="VirtualDirEdit" Type="Edit"   X="45" Y="85" Disabled="no" Width="220" Height="18" Property="VIR_DIR_VAL" Text="{80}">
+          <Publish Property="VIR_DIR_VAL" Value="[VIRTUAL_DIR_VAL]"></Publish>
+        </Control>
+        <!--Login-->
+        <Control Id="LoginPoolLabel" Type="Text" X="45" Y="135" Width="400" Height="15" TabSkip="no" Text="Enter service account name(Ex:domainname\username):" />
+        <Control Id="LoginPoolEdit"  Type="Edit"  X="45" Y="147" Width="220" Height="18" Property="WEB_APP_POOL_IDENTITY_NAME" Text="{80}" >
+          <Publish Property="POOL_ID_NAME_VAL" Value="[WEB_APP_POOL_IDENTITY_NAME]"></Publish>
+          <Condition Action="enable">FEATUREX_CHECKED&lt;&gt;1</Condition>
+          <Condition Action="disable">FEATUREX_CHECKED = 1</Condition>
+        </Control>
+        <!-- Password -->
+        <Control Id="PasswordPoolLabel" Type="Text" X="45" Y="167" Width="300" Height="15" TabSkip="no" Text="Enter service account password:" />
+        <Control Id="PasswordPoolEdit" Type="Edit" X="45" Y="179" Width="220" Height="18" Property="WEB_APP_POOL_IDENTITY_PWD" Text="{80}" Password="yes" >
+          <Publish Property="POOL_ID_PWD_VAL" Value="[WEB_APP_POOL_IDENTITY_PWD]"></Publish>
+          <Condition Action="enable">FEATUREX_CHECKED&lt;&gt;1</Condition>
+          <Condition Action="disable" >FEATUREX_CHECKED = 1</Condition>
+        </Control>
+        <!--checkbox-->
+        <Control Id="FeatureX" Type="CheckBox" X="45" Y="115" Width="180" Height="17"
+         Property="FEATUREX_CHECKED" CheckBoxValue="1" Text="I want to skip this and do it later."/>
+
+        <!-- Back button -->
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
+          <Publish Event="NewDialog" Value="WelcomeDlg">1</Publish>
+         
+        </Control>
+       
+        
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next">
+          
+          <Publish Event="DoAction" Value="GetFullComputerName">
+            
+          <!--<Publish Event="NewDialog" Value="InstallDirDlg" Order="1" >-->
+           
+            <![CDATA[VIRTUAL_DIR_VAL <> "" OR WEB_APP_POOL_IDENTITY_NAME <> "" OR WEB_APP_POOL_IDENTITY_PWD <> ""]]>
+          </Publish>
+          <Publish Event="NewDialog" Value="InstallDirDlg" Order="1">
+            <!--if settings are correct, allow next dialog-->
+            <![CDATA[VIRTUAL_DIR_VAL <> "" OR WEB_APP_POOL_IDENTITY_NAME <> "" OR WEB_APP_POOL_IDENTITY_PWD <> ""]]>
+          </Publish> 
+        
+          <!--<Publish Event="NewDialog" Value="SettingsDlg" Order="1">
+           -->
+          <!--if settings are correct, allow next dialog-->
+
+          <Publish Event="SpawnDialog" Value="BlankFieldErrDlg">
+            <![CDATA[(VIRTUAL_DIR_VAL = "" OR WEB_APP_POOL_IDENTITY_NAME = "" OR WEB_APP_POOL_IDENTITY_PWD = "") AND (FEATUREX_CHECKED <> "1")]]>
+          </Publish>
+          <Publish Event="SpawnDialog" Value="BlankFieldErrDlgAgentName">
+            <![CDATA[(VIRTUAL_DIR_VAL = "") AND (FEATUREX_CHECKED = "1")]]>
+          </Publish>
+          <Publish Event="DoAction" Value="ValidateForSpaceFromUserAgent">
+            <![CDATA[VIRTUAL_DIR_VAL <> ""]]>
+          </Publish>
+          <Publish Event="DoAction" Value="ValidateAgentAccount">
+            <![CDATA[(VIRTUAL_DIR_VAL <> "" AND WEB_APP_POOL_IDENTITY_NAME <> "" AND WEB_APP_POOL_IDENTITY_PWD <> "" AND RETERROR = 0) AND (FEATUREX_CHECKED <> "1")]]>
+          </Publish>
+          <Publish Event="SpawnDialog" Value="ValidateFieldErrDlgSkip">
+            <![CDATA[(VIRTUAL_DIR_VAL <> "" AND RETERROR <> 0) AND (FEATUREX_CHECKED = "1")]]>
+          </Publish>
+          <Publish Event="SpawnDialog" Value="ValidateFieldErrDlg">
+            <![CDATA[(VIRTUAL_DIR_VAL <> "" AND WEB_APP_POOL_IDENTITY_NAME <> "" AND WEB_APP_POOL_IDENTITY_PWD <> "" AND RETERROR <> 0) AND (FEATUREX_CHECKED <> "1")]]>
+          </Publish>
+          <!--<Publish Event="NewDialog" Value="SettingsDlg" Order="1">
+           -->
+          <!--if settings are correct, allow next dialog-->
+
+
+
+
+          <Publish Property="LOGON_VALID" Value="[LOGON_VALID]" Order="2">1</Publish>
+          <Publish Property="LOGON_ERROR" Value="Invalid Logon" Order="2"><![CDATA[LOGON_ERROR = "" AND LOGON_VALID = "0"]]></Publish>
+          <Publish Event="SpawnDialog" Value="InvalidLogonDlg" Order="2">    <![CDATA[LOGON_VALID = "0" AND FEATUREX_CHECKED <> "1" ]]></Publish>
+          <!--</Control>-->
+
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44" TabSkip="no" Text="WixUI_Bmp_Banner" />
+
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes">
+          <Text>{\WixUI_Font_Title}Password Reset Webapp</Text>
+        </Control>
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+      </Dialog>
+      <Dialog Id="BlankFieldErrDlg" Width="250" Height="80" Title="[ProductName] [Setup]" NoMinimize="yes">
+        <Control Id="Ok" Type="PushButton" X="100" Y="50" Width="56" Height="17"
+                  Default="yes" Cancel="yes" Text="OK">
+          <Publish Event="EndDialog" Value="Return">1</Publish>
+        </Control>
+        <Control Id="Text" Type="Text" X="50" Y="15" Width="194" Height="30">
+          <Text>Fields cannot be empty.</Text>
+        </Control>
+
+      </Dialog>
+      <Dialog Id="BlankFieldErrDlgAgentName" Width="250" Height="80" Title="[ProductName] [Setup]" NoMinimize="yes">
+        <Control Id="Ok" Type="PushButton" X="100" Y="50" Width="56" Height="17"
+                  Default="yes" Cancel="yes" Text="OK">
+          <Publish Event="EndDialog" Value="Return">1</Publish>
+        </Control>
+        <Control Id="Text" Type="Text" X="50" Y="15" Width="194" Height="30">
+          <Text>Fields cannot be empty.</Text>
+        </Control>
+
+      </Dialog>
+
+      <Dialog Id="ValidateFieldErrDlg" Width="250" Height="80" Title="[ProductName] [Setup]" NoMinimize="yes">
+        <Control Id="Ok" Type="PushButton" X="100" Y="50" Width="56" Height="17"
+                  Default="yes" Cancel="yes" Text="OK">
+          <Publish Event="EndDialog" Value="Return">1</Publish>
+        </Control>
+        <Control Id="Text" Type="Text" X="50" Y="15" Width="194" Height="30">
+          <Text>[ERRMESSAGE]</Text>
+        </Control>
+
+      </Dialog>
+
+      <Dialog Id="ValidateFieldErrDlgSkip" Width="250" Height="80" Title="[ProductName] [Setup]" NoMinimize="yes">
+        <Control Id="Ok" Type="PushButton" X="100" Y="50" Width="56" Height="17"
+                  Default="yes" Cancel="yes" Text="OK">
+          <Publish Event="EndDialog" Value="Return">1</Publish>
+        </Control>
+        <Control Id="Text" Type="Text" X="50" Y="15" Width="194" Height="30">
+          <Text>[ERRMESSAGE]</Text>
+        </Control>
+
+      </Dialog>
+      <Dialog Id="InvalidLogonDlg" Width="260" Height="85" Title="Invalid Logon">
+        <Control Id="Return" Type="PushButton" X="102" Y="57" Width="56" Height="17" Default="yes" Cancel="yes" Text="OK">
+          <Publish Event="EndDialog" Value="Return">1</Publish>
+        </Control>
+        <Control Id="Text" Type="Text" X="48" Y="15" Width="194" Height="30" Text="[LOGON_ERROR]" />
+        <Control Id="Icon" Type="Icon" X="15" Y="15" Width="24" Height="24" FixedSize="yes" IconSize="32" Text="WixUI_Ico_Exclam" />
+      </Dialog>
+      <!--<UIRef Id="WixUI_FeatureTree" />-->
+      <Property Id="WIXUI_INSTALLDIR" Value="INSTALLLOCATION" ></Property>
+      <UIRef Id="WixUI_InstallDir"/>
+      <!--<DialogRef Id="WelcomeEulaDlg" />-->
+      <!--<UIRef Id="WixUI_ErrorProgressText" />-->
+
+      <Publish Dialog="InstallDirDlg"
+        Control="Back"
+        Event="NewDialog"
+        Value="IisSetupDlg"
+        Order="2">1</Publish>
+      <!-- Injection of custom UI. -->
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="IisSetupDlg" Order="2">1</Publish>
+      <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">1</Publish>
+
+    </UI>
+    <InstallExecuteSequence>
+         <RemoveExistingProducts After="InstallInitialize" /> 
+    </InstallExecuteSequence>
+  <InstallUISequence>
+    <Custom Action="CA_BlockOlderVersionInstall" After="FindRelatedProducts">
+        <![CDATA[NEWERVERSIONDETECTED]]>
+      </Custom>
+
+      <Custom Action="CA_BlockAnotherBuildInstall" After="FindRelatedProducts">
+        <![CDATA[ANOTHERBUILDINSTALLED]]>
+      </Custom>
+  
+      <LaunchConditions After="AppSearch" />
+  
+  </InstallUISequence>
+  </Product>
+  <Fragment>
+    <?include ConfigurationInitialize.wxi ?>
+
+    <!-- Install to default web site -->
+    <iis:WebSite Id="DefaultWebSite" Description='Default Web Site'>
+      <iis:WebAddress Id="AllUnassigned" Port="80" />
+
+    </iis:WebSite>
+
+    <DirectoryRef Id="MYWEBWEBSITE">
+      <!-- Configuring app pool -->
+      <Component Id="MyWebAppPoolCmp" Guid="{751DEB01-ECC1-48ff-869A-65BCEE9E0528}" KeyPath="yes">
+        <Condition> NOT FEATUREX_CHECKED  </Condition>
+        <util:User Id="MyWebAppPoolUser"
+             CreateUser="no"
+             Name="[WEB_APP_POOL_IDENTITY_NAME]"
+             Password="[WEB_APP_POOL_IDENTITY_PWD]"
+             />
+
+
+        <iis:WebAppPool Id="MyWebAppPool"
+								Name="[WEB_APP_NAME]"
+								Identity="other"
+								User="MyWebAppPoolUser" ManagedRuntimeVersion="v4.0" ManagedPipelineMode="classic" />
+
+
+      </Component>
+      <Component Id='Settings' Guid='{D9C6738C-0421-40EC-9B26-7BF4B5E375D3}'>
+        <File Source='root.config'>
+          <CopyFile Id='rootweb.config' DestinationDirectory='INSTALLLOCATION' DestinationName='web.config'/>
+        </File>
+        <File Id='XmlSettings' Name='web.config1' DiskId='1' src='web.config' Vital='yes' />
+        <util:XmlFile Id='XmlSettings2' File='[MYWEBWEBSITE]web.config' Action='createElement' Name='date' ElementPath='/configuration/system.webServer' Sequence='1'/>
+        <util:XmlFile Id='XmlSettings8' File='[MYWEBWEBSITE]web.config' Action='setValue' Name='date' Value='[DATELI]' ElementPath='/configuration/system.webServer/date' Sequence='2'/>
+      </Component>
+      <!-- Configure virtual dir -->
+      <Component Id="MyWebVirtualDirCmp"  Guid="{347CF487-134D-4328-A77E-9A4C7F1FEC3A}" KeyPath="yes" >
+        <iis:WebVirtualDir Id="MyWebVirtualDir" Alias="[VIRTUAL_DIR_VAL]" Directory="MYWEBWEBSITE" WebSite="DefaultWebSite"   >
+          <iis:WebDirProperties Id="MyWebVirtDirProperties" AnonymousAccess="no" BasicAuthentication="no"  WindowsAuthentication="yes" AnonymousUser="MyWebAppPoolUser"  DefaultDocuments="_default.aspx" />
+          <iis:WebApplication Id="MyWebWebApplication" Name="[VIRTUAL_DIR_VAL]" WebAppPool="MyWebAppPool"  />
+        </iis:WebVirtualDir>
+      </Component>
+    </DirectoryRef>
+    <ComponentGroup Id="MyWebIssConfiguration">
+      <ComponentRef Id="MyWebVirtualDirCmp" />
+      <ComponentRef Id="MyWebAppPoolCmp" />
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <Property Id="INSTALLLOCATION">
+
+      <RegistrySearch Id="FindInetPubFolder" Root="HKLM" Key="SOFTWARE\Microsoft\InetStp" Name="PathWWWRoot" Type="directory" />
+    </Property>
+    <!--creating directories-->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <!-- Install stuff into program files folder. -->
+      <Directory Id="ProgramFilesFolder">
+        <!-- In program files create folder with name MyWeb. -->
+        <Directory Id="INSTALLLOCATION" Name="MyWeb">
+          <!-- This is the folder where the website content will be located -->
+          <Directory Id="MYWEBWEBSITE" Name="nexzip">
+            <Directory Id="BIN" Name="bin">
+              <Directory Id="ROSLYN" Name="roslyn" />
+            </Directory>
+
+            <Directory Id="CONTENT" Name="content" />
+            <Directory Id="FONTS" Name="fonts" />
+            <Directory Id="IMAGES" Name="images" />
+            <Directory Id="SCRIPTS" Name="scripts" />
+            <Directory Id="VIEWS" Name="views">
+              <Directory Id="HOME" Name="home" />
+              <Directory Id="ACCOUNT" Name="account" />
+              <Directory Id="SHARES" Name="shares" />
+            </Directory>
+            <Directory Id="ASSETS" Name="assets">
+              <Directory Id="CSS" Name="css" />
+              <Directory Id="DEMO" Name="demo" />
+              <Directory Id="FONT1" Name="fonts" />
+              <Directory Id="IMG" Name="img" />
+              <Directory Id="JS" Name="js">
+                <Directory Id="CORE" Name="core" />
+                <Directory Id="PLUGINS" Name="plugins" />
+              </Directory>
+
+            </Directory>
+            <Directory Id="APP_DATA" Name="App_Data" />
+
+            <!-- Continue in DirectoryRef with specific name -->
+          </Directory>
+          <!-- Here you can add another directories -->
+        </Directory>
+      </Directory>
+    </Directory>
+
+  </Fragment>
+
+	<Fragment>
+		<!--<ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">-->
+			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
+			<!-- <Component Id="ProductComponent"> -->
+				<!-- TODO: Insert files, registry keys, and other resources here. -->
+			<!-- </Component> -->
+		<!--</ComponentGroup>-->
+  <DirectoryRef Id="MYWEBWEBSITE">
+      <!-- Component handling the web.config -->
+      <Component Id="WebConfigCmp" Guid="{80D74D44-6250-4162-812B-94871049B8E0}">
+        <!-- Copy web.config to MYWEBWEBSITE folder. -->
+        <File Id="WebConfigFile" Source="Web.config" />
+        <File Id="ApplicationInsightsConfigFile" Source="ApplicationInsights.config" />
+        <File Id="PackagesConfigFile" Source="packages.config" />
+         <File Id="PrecompiledAppConfigFile" Source="PrecompiledApp.config" />
+        <File Id="Model1edmxdiagramFile" Source="Model1.edmx.diagram" />
+        
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="BIN">
+       <Component Id="BinComponent" Guid="{951F2196-8DBC-48F2-A0D0-1CAFDE229229}">
+          <File Id="System.Linq.Dynamic.dll" Source=".\bin\System.Linq.Dynamic.dll" />
+        <File Id="Antlr3.Runtime.dll" Source=".\bin\Antlr3.Runtime.dll" />
+        <File Id="Antlr3.Runtime.pdb" Source=".\bin\Antlr3.Runtime.pdb" />
+        <File Id="App_global.asax.compiled" Source=".\bin\App_global.asax.compiled" />
+        <File Id="App_global.asax.dll" Source=".\bin\App_global.asax.dll" />
+        <File Id="ApplicationInsights.config" Source=".\bin\ApplicationInsights.config" />
+        <File Id="EntityFramework.dll" Source=".\bin\EntityFramework.dll" />
+        <File Id="EntityFramework.SqlServer.dll" Source=".\bin\EntityFramework.SqlServer.dll" />
+        <File Id="log4net.dll" Source=".\bin\log4net.dll" />
+        <File Id="Microsoft.AI.Agent.Intercept.dll" Source=".\bin\Microsoft.AI.Agent.Intercept.dll" />
+        <File Id="Microsoft.AI.DependencyCollector.dll" Source=".\bin\Microsoft.AI.DependencyCollector.dll" />
+        <File Id="Microsoft.AI.PerfCounterCollector.dll" Source=".\bin\Microsoft.AI.PerfCounterCollector.dll" />
+        <File Id="Microsoft.AI.ServerTelemetryChannel.dll" Source=".\bin\Microsoft.AI.ServerTelemetryChannel.dll" />
+        <File Id="Microsoft.AI.WindowsServer.dll" Source=".\bin\Microsoft.AI.WindowsServer.dll" />
+        <File Id="Microsoft.AI.Web.dll" Source=".\bin\Microsoft.AI.Web.dll" />
+        <File Id="Microsoft.ApplicationInsights.dll" Source=".\bin\Microsoft.ApplicationInsights.dll" />
+        <File Id="Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll" Source=".\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll" />
+        <File Id="Microsoft.Web.Helpers.dll" Source=".\bin\Microsoft.Web.Helpers.dll" />
+        <File Id="Microsoft.Web.Infrastructure.dll" Source=".\bin\Microsoft.Web.Infrastructure.dll" />
+        <File Id="Newtonsoft.Json.dll" Source=".\bin\Newtonsoft.Json.dll" />
+        <File Id="SimpleCrypto.dll" Source=".\bin\SimpleCrypto.dll" />
+        <File Id="System.Web.Helpers.dll" Source=".\bin\System.Web.Helpers.dll" />
+        <File Id="System.Web.Mvc.dll" Source=".\bin\System.Web.Mvc.dll" />
+        <File Id="System.Web.Optimization.dll" Source=".\bin\System.Web.Optimization.dll" />
+        <File Id="System.Web.Razor.dll" Source=".\bin\System.Web.Razor.dll" />
+        <File Id="System.Web.Webpages.Deployment.dll" Source=".\bin\System.Web.Webpages.Deployment.dll" />
+        <File Id="System.Web.Webpages.dll" Source=".\bin\System.Web.Webpages.dll" />
+        <File Id="System.Web.Webpages.Razor.dll" Source=".\bin\System.Web.Webpages.Razor.dll" />
+        <File Id="WebApplication2.dll" Source=".\bin\WebApplication2.dll" />
+        <File Id="WebApplication2.pdb" Source=".\bin\WebApplication2.pdb" />
+        <File Id="WebGrease.dll" Source=".\bin\WebGrease.dll" />
+        <File Id="WebMatrix.Data.dll" Source=".\bin\WebMatrix.Data.dll" />
+        <File Id="WebMatrix.WebData.dll" Source=".\bin\WebMatrix.WebData.dll" />
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="ROSLYN">
+      <Component Id="RoslynComponent" Guid="{04EC603B-B1A2-4C83-A49B-26375AFF7D56}">
+         <File Id="csc.exe" Source=".\bin\roslyn\csc.exe" />
+         <File Id="Microsoft.Build.Tasks.CodeAnalysis.dll" Source=".\bin\roslyn\Microsoft.Build.Tasks.CodeAnalysis.dll" />
+         <File Id="Microsoft.CodeAnalysis.CSharp.dll" Source=".\bin\roslyn\Microsoft.CodeAnalysis.CSharp.dll" />
+         <File Id="Microsoft.CodeAnalysis.dll" Source=".\bin\roslyn\Microsoft.CodeAnalysis.dll" />
+         <File Id="Microsoft.CodeAnalysis.VisualBasic.dll" Source=".\bin\roslyn\Microsoft.CodeAnalysis.VisualBasic.dll" />
+         <File Id="Microsoft.CSharp.Core.targets" Source=".\bin\roslyn\Microsoft.CSharp.Core.targets" />
+         <File Id="Microsoft.VisualBasic.Core.targets" Source=".\bin\roslyn\Microsoft.VisualBasic.Core.targets" />
+         <File Id="System.Collections.Immutable.dll" Source=".\bin\roslyn\System.Collections.Immutable.dll" />
+         <File Id="System.Reflection.Metadata.dll" Source=".\bin\roslyn\System.Reflection.Metadata.dll" />
+         <File Id="vbc.exe" Source=".\bin\roslyn\vbc.exe" />
+         <File Id="VBCSCompiler.exe" Source=".\bin\roslyn\VBCSCompiler.exe" />
+         <File Id="VBCSCompiler.exe.config" Source=".\bin\roslyn\VBCSCompiler.exe.config" />
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="CONTENT">
+      <Component Id="ContentComponent" Guid="{A43E6781-85FB-4F4B-9BBC-F1DB47579568}">
+        <File Id="bootstrap.css" Source=".\content\bootstrap.css" />
+        <File Id="bootstrap.css.map" Source=".\content\bootstrap.css.map" />
+        <File Id="bootstrap.min.css" Source=".\content\bootstrap.min.css" />
+        <File Id="bootstrap.min.css.map" Source=".\content\bootstrap.min.css.map" />
+        <File Id="bootstrap_theme.css" Source=".\content\bootstrap-theme.css" />
+        <File Id="bootstrap_theme.css.map" Source=".\content\bootstrap-theme.css.map" />
+        <File Id="bootstrap_theme.min.css" Source=".\content\bootstrap-theme.min.css" />
+        <File Id="bootstrap_theme.min.css.map" Source=".\content\bootstrap-theme.min.css.map" />
+        <File Id="jquery.virtual_keyboard.css" Source=".\content\jquery.virtual_keyboard.css" />
+   
+    </Component>
+    </DirectoryRef>
+    
+    
+    <DirectoryRef Id="FONTS">
+      <Component Id="FontsComponent" Guid="{1217B5A3-AA4D-4442-B638-5581DA93DF0D}">
+      <File Id="glyphicons_halflings_regular.eot" Source=".\fonts\glyphicons-halflings-regular.eot" />
+      <File Id="glyphicons_halflings_regular.svg" Source=".\fonts\glyphicons-halflings-regular.svg" />
+      <File Id="glyphicons_halflings_regular.ttf" Source=".\fonts\glyphicons-halflings-regular.ttf" />
+      <File Id="glyphicons_halflings_regular.woff" Source=".\fonts\glyphicons-halflings-regular.woff" />
+      <File Id="glyphicons_halflings_regular.woff2" Source=".\fonts\glyphicons-halflings-regular.woff2" />
+    </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="IMAGES">
+      <Component Id="ImagesComponent" Guid="{C7715417-9687-4463-B516-2EFCFF0A6A44}">
+        <File Id="user_logo.png" Source=".\images\user_logo.png" />
+    
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="SCRIPTS">
+      <Component Id="ScriptsComponent" Guid="{A41811D7-49DD-462B-98D2-56DF1202008E}">
+        <File Id="ai.0.15.0_build58334.js" Source=".\scripts\ai.0.15.0-build58334.js" />
+        <File Id="ai.0.15.0_build58334.min.js" Source=".\scripts\ai.0.15.0-build58334.min.js" />
+        <File Id="bootstrap.js" Source=".\scripts\bootstrap.js" />
+        <File Id="bootstrap.min.js" Source=".\scripts\bootstrap.min.js" />
+        <File Id="jquery.unobtrusive_ajax.js" Source=".\scripts\jquery.unobtrusive-ajax.js" />
+        <File Id="jquery.validate.js" Source=".\scripts\jquery.validate.js" />
+        <File Id="jquery.validate.min.js" Source=".\scripts\jquery.validate.min.js" />
+        <File Id="jquery.validate.unobtrusive.js" Source=".\scripts\jquery.validate.unobtrusive.js" />
+        <File Id="jquery.validate.unobtrusive.min.js" Source=".\scripts\jquery.validate.unobtrusive.min.js" />
+        <File Id="jquery.virtual_keyboard.js" Source=".\scripts\jquery.virtual_keyboard.js" />
+        <File Id="jquery_2.2.4.js" Source=".\scripts\jquery-2.2.4.js" />
+        <File Id="jquery_2.2.4.min.js" Source=".\scripts\jquery-2.2.4.min.js" />
+        <File Id="jquery_2.2.4.min.map" Source=".\scripts\jquery-2.2.4.min.map" />
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="VIEWS">
+      <Component Id="ViewsComponent" Guid="{981A059A-E3EC-42C6-81EA-B1868221846B}">
+        <File Id="web.config" Source=".\views\web.config" />
+        
+      </Component>
+    
+    </DirectoryRef>
+    
+      <DirectoryRef Id="ACCOUNT">
+      <Component Id="AccountComponent" Guid="{7F44118E-7ACB-4DE3-8E3B-56F608CE9337}">
+        <File Id="ChangePassword.cshtml" Source=".\views\Account\ChangePassword.cshtml" />
+         <File Id="changepwdinad.cshtml" Source=".\views\Account\changepwdinad.cshtml" />
+         <File Id="EnableUser.cshtml" Source=".\views\Account\EnableUser.cshtml" />
+         <File Id="GetRegUsers.cshtml" Source=".\views\Account\GetRegUsers.cshtml" />
+         <File Id="adminviewwe.cshtml" Source=".\views\Account\adminviewwe.cshtml" />
+         <File Id="changeuserpass.cshtml" Source=".\views\Account\changeuserpass.cshtml" />
+         <File Id="configauthoptions.cshtml" Source=".\views\Account\configauthoptions.cshtml" />
+         <File Id="adminview.cshtml" Source=".\views\Account\adminview.cshtml" />
+         <File Id="GetADusers.cshtml" Source=".\views\Account\GetADusers.cshtml" />
+          <File Id="GetRecentpasswordrests.cshtml" Source=".\views\Account\GetRecentpasswordrests.cshtml" />
+         <File Id="Listofqfora.cshtml" Source=".\views\Account\Listofqfora.cshtml" />
+         <File Id="Myprofile.cshtml" Source=".\views\Account\Myprofile.cshtml" />
+         <File Id="Myprofilewe.cshtml" Source=".\views\Account\Myprofilewe.cshtml" />
+         <File Id="SelectAdmiqforuser.cshtml" Source=".\views\Account\SelectAdmiqforuser.cshtml" />
+         <File Id="Setpassword.cshtml" Source=".\views\Account\Setpassword.cshtml" />
+         <File Id="UpdateusersfromAD.cshtml" Source=".\views\Account\UpdateusersfromAD.cshtml" />
+         <File Id="pwdpolicy.cshtml" Source=".\views\Account\pwdpolicy.cshtml" />
+        <File Id="adcmpters.cshtml" Source=".\views\Account\adcmpters.cshtml" />
+  </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="HOME">
+      <Component Id="HomeComponent" Guid="{6A89A5E0-8319-42BD-95F5-4086555373D2}">
+          <File Id="authforpswdreset1.cshtml" Source=".\views\Home\authforpswdreset1.cshtml" />
+         <File Id="bulkUsers.cshtml" Source=".\views\Home\bulkUsers.cshtml" />
+        <File Id="progressbar.cshtml" Source=".\views\Home\progressbar.cshtml" />
+         <File Id="Aditmydata.cshtml" Source=".\views\Home\Aditmydata.cshtml" />
+         <File Id="authforpswdreset.cshtml" Source=".\views\Home\authforpswdreset.cshtml" />
+         <File Id="emailotp.cshtml" Source=".\views\Home\emailotp.cshtml" />
+         <File Id="Index.cshtml" Source=".\views\Home\Index.cshtml" />
+         <File Id="IndexMysample.cshtml" Source=".\views\Home\IndexMysample.cshtml" />
+          <File Id="Login.cshtml" Source=".\views\Home\Login.cshtml" />
+          <File Id="MyLogin.cshtml" Source=".\views\Home\MyLogin.cshtml" />
+          <File Id="Signup.cshtml" Source=".\views\Home\Signup.cshtml" />
+          <File Id="smsotp.cshtml" Source=".\views\Home\smsotp.cshtml" />
+          <File Id="UnAuthorized.cshtml" Source=".\views\Home\UnAuthorized.cshtml" />
+          <File Id="forgotpassword.cshtml" Source=".\views\Home\forgotpassword.cshtml" />
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="SHARES">
+      <Component Id="SharesComponent" Guid="{632DF78C-60E5-49DC-89CF-338991CA94DF}">
+         <File Id="_LayoutPage1.cshtml" Source=".\views\Shares\_LayoutPage1.cshtml" />
+         <File Id="_LayoutPage2.cshtml" Source=".\views\Shares\_LayoutPage2.cshtml" />
+       <File Id="_LayoutPage3.cshtml" Source=".\views\Shares\_LayoutPage3.cshtml" />
+         <File Id="_LayoutPage4.cshtml" Source=".\views\Shares\_LayoutPage4.cshtml" />
+        <File Id="_LayoutPage5.cshtml" Source=".\views\Shares\_LayoutPage5.cshtml" />
+      
+      </Component>
+    </DirectoryRef>
+    
+     <DirectoryRef Id="ASSETS">
+      <Component Id="AssetsComponent" Guid="{87D136EB-49D9-45EE-AC11-56FB812D226E}">
+         <File Id="DSStore" Source=".\Assets\.DS_Store" />
+         
+      </Component>
+    </DirectoryRef>
+      <DirectoryRef Id="CSS">
+      <Component Id="CssComponent" Guid="{6F296F14-168F-4252-B08C-B0946290DAD0}">
+         <File Id="blackdashboard.css" Source=".\Assets\css\black-dashboard.css" />
+         <File Id="blackdashboard.css.map" Source=".\Assets\css\black-dashboard.css.map" />
+        <File Id="blackdashboard.min.css" Source=".\Assets\css\black-dashboard.min.css" />
+         <File Id="nucleoicons.css" Source=".\Assets\css\nucleo-icons.css" />
+     </Component>
+     </DirectoryRef>
+     <DirectoryRef Id="DEMO">
+      <Component Id="DemoComponent" Guid="{F0B7E148-33F6-4CC9-B66E-61F7F07CA88C}">
+         <File Id="demo.css" Source=".\Assets\demo\demo.css" />
+       <File Id="demo.js" Source=".\Assets\demo\demo.js" />
+        </Component>
+     </DirectoryRef>
+      <DirectoryRef Id="FONT1">
+      <Component Id="Font1Component" Guid="{BCCEEC7A-C37C-4A61-9274-651318A037D2}">
+         <File Id="nucleo.eot" Source=".\Assets\font1\nucleo.eot" />
+         <File Id="nucleo.ttf" Source=".\Assets\font1\nucleo.ttf" />
+        <File Id="nucleo.woff" Source=".\Assets\font1\nucleo.woff" />
+         <File Id="nucleo.woff2" Source=".\Assets\font1\nucleo.woff2" />
+     </Component>
+     </DirectoryRef>
+ 
+    <DirectoryRef Id="IMG">
+      <Component Id="ImgComponent" Guid="{0D58A21A-9E3B-4BD2-ABE0-A89A8B62CA4A}">
+         <File Id="anime3.png" Source=".\Assets\img\anime3.png" />
+      
+        </Component>
+     </DirectoryRef>
+     <DirectoryRef Id="JS">
+      <Component Id="JsComponent" Guid="{8FDCC79C-A33C-403B-8EF4-043A80466F94}">
+         <File Id="blackdashboard.js" Source=".\Assets\js\black-dashboard.js" />
+          <File Id="blackdashboard.js.map" Source=".\Assets\js\black-dashboard.js.map" />
+          <File Id="blackdashboard.min.js" Source=".\Assets\js\black-dashboard.min.js" />
+        <File Id="bootstrap1.js" Source=".\Assets\js\bootstrap.js" />
+        <File Id="bootstrap_table.js" Source=".\Assets\js\bootstrap-table.js" />
+        <File Id="jquery_1.11.2.min.js" Source=".\Assets\js\jquery-1.11.2.min.js" />
+        
+        
+     </Component>
+     </DirectoryRef>
+     <DirectoryRef Id="CORE">
+      <Component Id="CoreComponent" Guid="{EB4A3330-C3C9-461D-A4E5-C23B5EF1EF24}">
+         <File Id="bootstrap.min.jss" Source=".\Assets\js\core\bootstrap.min.js" />
+          <File Id="jquery.min.js" Source=".\Assets\js\core\jquery.min.js" />
+          <File Id="popper.min.js" Source=".\Assets\js\core\popper.min.js" />
+     </Component>
+     </DirectoryRef>
+    <DirectoryRef Id="PLUGINS">
+      <Component Id="PluginsComponent" Guid="{BAA47438-E2D0-4EA0-84C7-04CBB9B6C0AE}">
+         <File Id="bootstrapnotify.js" Source=".\Assets\js\plugins\bootstrap-notify.js" />
+          <File Id="chartjs.min.js" Source=".\Assets\js\plugins\chartjs.min.js" />
+          <File Id="perfectscrollbar.jquery.min.js" Source=".\Assets\js\plugins\perfect-scrollbar.jquery.min.js" />
+     </Component>
+     </DirectoryRef>
+     
+ 
+          <!--<Adding the files of database>-->
+    <DirectoryRef Id="APP_DATA">
+      <Component Id="App_DataComponent" Guid="{CDDED270-07C2-4DAC-A1FF-9D9A3E0B82CE}">
+        <File Id="pareset.mdf" Source=".\App_Data\pareset.mdf" />
+        <File Id="pareset_log.ldf" Source=".\App_Data\pareset_log.ldf" />
+      </Component>
+    </DirectoryRef>
+	</Fragment>
+ 
+</Wix>
